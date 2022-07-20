@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
+)
 
 func main() {
 	
@@ -10,4 +14,28 @@ func main() {
     var musicUserToken = "AmIKSqcLaVo8ziS52+UVu6Qf+OW8vg8qXAhbpRi/+eh0ObM4AZ22pTVIZdxhsbpHCyiIOtjbmA8jKRkEqQL3+yo9AQSAJgTzu9l1CjSY1WLPOvl71B5bi9ZpFE/FhKahuqyP9Lf+aHV9H3bhThaPrWTrLO1HjxMbaxWjTzgoJVzGqdbviQdfYzxcHTe4nAzBNxKHysAm00SGl8xaVviEzb4Gs5sN1cpRrbso2TjO/cvlfvX+9g==";
 
     
+
+/*    client := &http.Client{}*/
+    /*req, _ := http.NewRequest("GET", "https://api.spotify.com/v1/me/tracks?market=ES", nil)*/
+    /*req.Header.Set("Authorization", token)*/
+    /*res, _ := client.Do(req)*/
+    /*body, _ := ioutil.ReadAll(res.Body)*/
+    /*fmt.Print(string(body))*/
+
+    client := &http.Client{}
+    req, _ := http.NewRequest("GET", "https://api.music.apple.com/v1/me/library/songs", nil)
+    
+    // Setting headers for user and developer authentication
+    req.Header.Set("Authorization", "Bearer " + appleDeveloperToken)
+    req.Header.Set("Music-User-Token", musicUserToken)
+
+    // Setting query parameters
+    q := req.URL.Query()
+    q.Add("limit", "100")
+    q.Add("offset", "99")
+    req.URL.RawQuery = q.Encode()
+
+    res, _ := client.Do(req)
+    body, _ := ioutil.ReadAll(res.Body)
+    fmt.Print(string(body))
 }
