@@ -1,10 +1,30 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 )
+
+type Response struct {
+    Next string
+    Data []Song
+    Meta Meta
+}
+
+type Meta struct{
+    Total int
+}
+
+type Song struct {
+    Attributes Attributes
+}
+
+type Attributes struct {
+    ArtistName string
+    Name string
+}
 
 func main() {
 	
@@ -28,7 +48,7 @@ func main() {
     // Setting headers for user and developer authentication
     req.Header.Set("Authorization", "Bearer " + appleDeveloperToken)
     req.Header.Set("Music-User-Token", musicUserToken)
-
+    
     // Setting query parameters
     q := req.URL.Query()
     q.Add("limit", "100")
@@ -36,6 +56,17 @@ func main() {
     req.URL.RawQuery = q.Encode()
 
     res, _ := client.Do(req)
+    resData := Response{}
     body, _ := ioutil.ReadAll(res.Body)
-    fmt.Print(string(body))
+    json.Unmarshal(body, &resData)
+    //fmt.Println(resData)
+    
+    fmt.Println(resData.Meta.Total);
+
+    for _, v := range resData.Data {
+        fmt.Println(v.Attributes.ArtistName)
+        fmt.Println(v.Attributes.Name)
+
+        fmt.Println()
+    } 
 }
