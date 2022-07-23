@@ -5,41 +5,24 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"github.com/zmb3/spotify"
 )
 
-type SpotifyClientBuilderConfig struct {
-	ClientID     string
-	ClientSecret string
-	Scopes       []string
-	LocalPort    string
-}
-
-// SpotifyClientBuilder builds an authenticated Spotify client
 type SpotifyClientBuilder struct {
-	Config *SpotifyClientBuilderConfig
 	auth   spotify.Authenticator
 	state  string
 	ch     chan *spotify.Client
 }
 
-func NewSpotifyClientBuilder(config *SpotifyClientBuilderConfig) *SpotifyClientBuilder {
+func NewSpotifyClientBuilder() *SpotifyClientBuilder {
 	c := &SpotifyClientBuilder{}
-	if config == nil {
-		c.Config = &SpotifyClientBuilderConfig{
-			Scopes:       []string{spotify.ScopeUserTopRead},
-			LocalPort:    "8080",
-			ClientID:     os.Getenv("SPOTIFY_ID"),
-			ClientSecret: os.Getenv("SPOTIFY_SECRET"),
-		}
-	} else {
-		c.Config = config
-	}
-	c.auth = spotify.NewAuthenticator(fmt.Sprintf("http://localhost:8080/callback"), c.Config.Scopes...)
-	if c.Config.ClientID != "" && c.Config.ClientSecret != "" {
-		c.auth.SetAuthInfo(c.Config.ClientID, c.Config.ClientSecret)
-	}
+
+	c.auth = spotify.NewAuthenticator(
+		"http://localhost:8080/callback", 
+		spotify.ScopeUserLibraryModify, 
+		spotify.ScopeUserLibraryRead,
+	)
+
 	c.state = randStringBytes(40)
 	c.ch = make(chan *spotify.Client)
 	return c
@@ -52,11 +35,12 @@ func (c *SpotifyClientBuilder) GetClient() (*spotify.Client, error) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Println("Got request for:", r.URL.String())
 	})
+
 	go http.ListenAndServe(":8080", nil)
 	url := c.auth.AuthURL(c.state)
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
 	// wait for auth to complete
-	client := <-c.ch
+	client := <- c.ch
 	return client, nil
 }
 
@@ -87,27 +71,35 @@ func randStringBytes(n int) string {
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789_"
 
 func runSpotify() {
-	spotifyClientBuilder := NewSpotifyClientBuilder(nil)
-	spotifyClient, err := spotifyClientBuilder.GetClient()
+	spotifyClient, err := NewSpotifyClientBuilder().GetClient()
 	
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	
+
 	// get the logged in user
 	user, err := spotifyClient.CurrentUser()
+
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	fmt.Println("Hello " + user.DisplayName)
-	// get the user's top tracks
-	tracks, err := spotifyClient.CurrentUsersTopTracks()
+	k := 50
+	o := spotify.Options{Limit: &k}
+
+	tracks, err := spotifyClient.CurrentUsersTracksOpt(&o)
+
 	if err != nil {
 		log.Fatal(err)
 	}
-	for i := 0; i < len(tracks.Tracks); i++ {
-		fmt.Println(tracks.Tracks[i].Name)
+
+	for i, v := range tracks.Tracks{
+		fmt.Println(i, v)
 	}
-	
-    
+
+	fmt.Println(tracks.Total)
 }
 
