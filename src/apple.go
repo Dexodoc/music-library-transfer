@@ -7,30 +7,32 @@ import (
 	"strconv"
 )
 
+// Structs for destructuring response data
+
 type Response struct {
 	Next string
-	Data []Song
-	Meta Meta
+	Data []AppleSong
+	Meta AppleMeta
 }
 
-type Meta struct {
+type AppleMeta struct {
 	Total int
 }
 
-type Song struct {
-	Attributes Attributes
+type AppleSong struct {
+	Attributes AppleAttributes
 }
 
-type Attributes struct {
+type AppleAttributes struct {
 	ArtistName string
 	Name       string
 }
 
-func getSongCount(devToken string, userToken string) int {
-	return makeSongRequest(devToken, userToken, 100, 0).Meta.Total
+func getSongCountApple(devToken string, userToken string) int {
+	return getSongsApple(devToken, userToken, 100, 0).Meta.Total
 }
 
-func makeSongRequest(devToken string, userToken string, limit int, offset int) (r Response) {
+func getSongsApple(devToken string, userToken string, limit int, offset int) (r Response) {
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", "https://api.music.apple.com/v1/me/library/songs", nil)
 
@@ -48,5 +50,23 @@ func makeSongRequest(devToken string, userToken string, limit int, offset int) (
 	json.Unmarshal(body, &r)
 	
 	return
+}
+
+func getAllSongsApple(devToken string, userToken string) SongList {
+	songs := []Song{}
+	songList := SongList{Songs: songs}
+	
+	songCount := getSongCountApple(devToken, userToken)
+
+	for offset := 0; offset < songCount; offset += 100 {
+		resData := getSongsApple(devToken, userToken, 100, offset)
+		
+		for _, v := range resData.Data {
+			newSong := Song{name: v.Attributes.Name, artists: []string{v.Attributes.ArtistName}}
+			songList.AddItem(newSong)
+		}
+	}
+
+	return songList
 }
 
