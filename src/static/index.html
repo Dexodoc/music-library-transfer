@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
+    <title>Document</title>
+</head>
+<body>
+    
+</body>
+
+<script>
+document.addEventListener('musickitloaded', function() {
+    // MusicKit global is now defined
+    MusicKit.configure({
+    developerToken: 'eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IlRSVUM3NzdEWkwifQ.eyJpYXQiOjE2NTgzMzYzNzksImV4cCI6MTY3Mzg4ODM3OSwiaXNzIjoiM1M1OVVGV1A4WSJ9.ywmXqlzN700OszGHLXePHOk2ifJ3EFWk_mF5XZT8w9bPgK9epenRO62tbpjdVMNgu6p6Hio6095Wig73_3xtwA',
+    app: {
+        name: 'Music Library Transfer',
+        build: '1.0.0'
+    }
+    });
+
+    let music = MusicKit.getInstance();
+
+    music.authorize().then(musicUserToken => {
+        console.log(musicUserToken);
+    });
+});
+</script>
+</html>

@@ -40,7 +40,7 @@ func (c *SpotifyClientBuilder) GetClient() (*spotify.Client, error) {
 	url := c.auth.AuthURL(c.state)
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
 	// wait for auth to complete
-	client := <-c.ch
+	client := <- c.ch
 	return client, nil
 }
 

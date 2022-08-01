@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -26,6 +28,21 @@ type AppleSong struct {
 type AppleAttributes struct {
 	ArtistName string
 	Name       string
+}
+
+func getMusicUserToken() {
+	m := http.NewServeMux()
+    s := http.Server{Addr: ":8000", Handler: m}
+    
+	m.HandleFunc("/return", func(w http.ResponseWriter, r *http.Request) {
+        s.Shutdown(context.Background())
+    })
+	fs := http.FileServer(http.Dir("./static"))
+	m.HandleFunc("/", fs.ServeHTTP)
+    
+	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+        log.Fatal(err)
+    }
 }
 
 func getSongCountApple(devToken string, userToken string) int {
