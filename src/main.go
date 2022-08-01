@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
 )
 
 type SongList struct {
@@ -22,42 +21,11 @@ func (sl *SongList) AddItem(song Song) []Song{
 
 
 func main() {
-
 	os.Setenv("SPOTIFY_ID", "c8a2b5d8d88449f5b936603275a4f3fe")
 	os.Setenv("SPOTIFY_SECRET", "afc789be90034389b8a0ab2d0a845aa2")
-
-	if false{
-		appleDeveloperToken := "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IlRSVUM3NzdEWkwifQ.eyJpYXQiOjE2NTgzMzYzNzksImV4cCI6MTY3Mzg4ODM3OSwiaXNzIjoiM1M1OVVGV1A4WSJ9.ywmXqlzN700OszGHLXePHOk2ifJ3EFWk_mF5XZT8w9bPgK9epenRO62tbpjdVMNgu6p6Hio6095Wig73_3xtwA"
+	os.Setenv("APPLE_DEV_TOKEN", "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IlRSVUM3NzdEWkwifQ.eyJpYXQiOjE2NTkzOTYxMDMsImV4cCI6MTY3NDk0ODEwMywiaXNzIjoiM1M1OVVGV1A4WSJ9.Z5UJwcOyil_2DUjqmCP1ztCYCNnfa3RpwkYrf5rmbJEcgf0iNuzYOgltHUZdtASsxBlYVoI5be3ZW2OchAEEBg")
 	
-		// Currently personal token
-		musicUserToken := "AmIKSqcLaVo8ziS52+UVu6Qf+OW8vg8qXAhbpRi/+eh0ObM4AZ22pTVIZdxhsbpHCyiIOtjbmA8jKRkEqQL3+yo9AQSAJgTzu9l1CjSY1WLPOvl71B5bi9ZpFE/FhKahuqyP9Lf+aHV9H3bhThaPrWTrLO1HjxMbaxWjTzgoJVzGqdbviQdfYzxcHTe4nAzBNxKHysAm00SGl8xaVviEzb4Gs5sN1cpRrbso2TjO/cvlfvX+9g=="
-
-		totalSongCount := getSongCountApple(appleDeveloperToken, musicUserToken)
-		f, _ := os.Create("songList.txt") 
-		
-		defer f.Close()
-
-		for offset := 0; offset < totalSongCount; offset += 100 {
-			fmt.Println(offset)
-
-			resData := getSongsApple(appleDeveloperToken, musicUserToken, 100, offset)
-			
-			for i, v := range resData.Data {
-				f.WriteString(strconv.Itoa(offset + i) + " " + v.Attributes.ArtistName + " - " + v.Attributes.Name + "\n")
-			}
-
-		}
-	}
-
-	// spotifyClient, err := NewSpotifyClientBuilder().GetClient()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// v := getAllSongsSpotify(*spotifyClient)
-	// for i, v := range v.Songs{
-	// 	fmt.Println(i, v)
-	// }
-
-	getMusicUserToken()
+	pain := getMusicUserToken()
+	fmt.Println(pain)
+	fmt.Println(getSongCountApple(os.Getenv("APPLE_DEV_TOKEN"), pain))
 }
