@@ -1,25 +1,25 @@
 package main
 
 import (
-	"math/rand"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"github.com/zmb3/spotify"
 )
 
 type SpotifyClientBuilder struct {
-	auth   spotify.Authenticator
-	state  string
-	ch     chan *spotify.Client
+	auth  spotify.Authenticator
+	state string
+	ch    chan *spotify.Client
 }
 
 func NewSpotifyClientBuilder() *SpotifyClientBuilder {
 	c := &SpotifyClientBuilder{}
 
 	c.auth = spotify.NewAuthenticator(
-		"http://localhost:8080/callback", 
-		spotify.ScopeUserLibraryModify, 
+		"http://localhost:8080/callback",
+		spotify.ScopeUserLibraryModify,
 		spotify.ScopeUserLibraryRead,
 	)
 
@@ -40,7 +40,7 @@ func (c *SpotifyClientBuilder) GetClient() (*spotify.Client, error) {
 	url := c.auth.AuthURL(c.state)
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
 	// wait for auth to complete
-	client := <- c.ch
+	client := <-c.ch
 	return client, nil
 }
 
@@ -70,36 +70,44 @@ func randStringBytes(n int) string {
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789_"
 
-func runSpotify() {
-	spotifyClient, err := NewSpotifyClientBuilder().GetClient()
-	
-	if err != nil {
-		log.Fatal(err)
+func getAllSongsSpotify(spotifyClient spotify.Client) SongList {
+	songs := []Song{}
+	songList := SongList{Songs: songs}
+
+	songCount := getSongCountSpotify(spotifyClient)
+
+	for offset := 0; offset < songCount; offset += 50 {
+		limit := 50
+		options := spotify.Options{Limit: &limit, Offset: &offset}
+		songs, err := spotifyClient.CurrentUsersTracksOpt(&options)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, val := range songs.Tracks {
+			newSong := Song{name: val.FullTrack.Name, artists: simpleArtistToString(val.Artists)}
+			songList.AddItem(newSong)
+		}
 	}
 
-	
-
-	// get the logged in user
-	user, err := spotifyClient.CurrentUser()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("Hello " + user.DisplayName)
-	k := 50
-	o := spotify.Options{Limit: &k}
-
-	tracks, err := spotifyClient.CurrentUsersTracksOpt(&o)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for i, v := range tracks.Tracks{
-		fmt.Println(i, v)
-	}
-
-	fmt.Println(tracks.Total)
+	return songList
 }
 
+func getSongCountSpotify(spotifyClient spotify.Client) int {
+	tracks, err := spotifyClient.CurrentUsersTracks()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return tracks.Total
+}
+
+func simpleArtistToString(artists []spotify.SimpleArtist) []string {
+	toReturn := make([]string, len(artists))
+
+	for i, e := range artists {
+		toReturn[i] = e.Name
+	}
+
+	return toReturn
+}
