@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+
 	"github.com/zmb3/spotify"
 )
 
@@ -40,7 +41,7 @@ func (c *SpotifyClientBuilder) GetClient() (*spotify.Client, error) {
 	url := c.auth.AuthURL(c.state)
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
 	// wait for auth to complete
-	client := <- c.ch
+	client := <-c.ch
 	return client, nil
 }
 
@@ -110,4 +111,47 @@ func simpleArtistToString(artists []spotify.SimpleArtist) []string {
 	}
 
 	return toReturn
+}
+
+func addAllSongsSpotify(spotifyClient spotify.Client, songs SongList) {
+	ids := make([]spotify.ID, len(songs.Songs))
+
+	for i, v := range songs.Songs{
+		ids[i] = getSongIdSpotify(spotifyClient, v)
+	}
+
+	addSongIdSpotify(spotifyClient, ids)
+}
+
+func getSongIdSpotify(spotifyClient spotify.Client, song Song) spotify.ID {
+	res, err := spotifyClient.Search(song.name + " " +song.artists[0], spotify.SearchTypeTrack)
+	if err != nil {
+		fmt.Println("ERRR")
+		log.Fatal(err)
+	}
+	fmt.Println(song.name)
+
+	return res.Tracks.Tracks[0].ID
+}
+
+func addSongIdSpotify(spotifyClient spotify.Client, ids []spotify.ID) {
+	if len(ids) > 50 {
+		i := 0
+		for i = 0; i < len(ids); i+=50 {
+			if i+49 > len(ids) {
+				break
+			}
+			err := spotifyClient.AddTracksToLibrary(ids[i:i+49]...)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		spotifyClient.AddTracksToLibrary(ids[i:]...)
+	}else{
+		err := spotifyClient.AddTracksToLibrary(ids...)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	
 }
