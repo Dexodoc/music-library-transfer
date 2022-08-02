@@ -13,7 +13,7 @@ import (
 
 // Structs for destructuring response data
 
-type Response struct {
+type LibraryResponse struct {
 	Next string
 	Data []AppleSong
 	Meta AppleMeta
@@ -30,6 +30,27 @@ type AppleSong struct {
 type AppleAttributes struct {
 	ArtistName string
 	Name       string
+}
+
+type StorefrontResponse struct {
+	Data []struct {
+		ID string
+	}
+}
+
+type SearchResponse struct {
+	Results struct {
+		Songs struct {
+			Data []struct {
+				ID         string `json:"id"`
+				Attributes struct {
+					AlbumName        string   `json:"albumName"`
+					Name                 string `json:"name"`
+					ArtistName string `json:"artistName"`
+				} `json:"attributes"`
+			} `json:"data"`
+		} `json:"songs"`
+	} `json:"results"`
 }
 
 func getMusicUserToken() string {
@@ -60,7 +81,7 @@ func getSongCountApple(devToken string, userToken string) int {
 	return getSongsApple(devToken, userToken, 1, 0).Meta.Total
 }
 
-func getSongsApple(devToken string, userToken string, limit int, offset int) (r Response) {
+func getSongsApple(devToken string, userToken string, limit int, offset int) (r LibraryResponse) {
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", "https://api.music.apple.com/v1/me/library/songs", nil)
 
@@ -95,4 +116,38 @@ func getAllSongsApple(devToken string, userToken string) SongList {
 		}
 	}
 	return songList
+}
+
+func getStorefrontApple(devToken string, userToken string) string{
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", "https://api.music.apple.com/v1/me/storefront", nil)
+
+	req.Header.Set("Authorization", "Bearer "+devToken)
+	req.Header.Set("Music-User-Token", userToken)
+	r := StorefrontResponse{}
+	res, _ := client.Do(req)
+	body, _ := ioutil.ReadAll(res.Body)
+	json.Unmarshal(body, &r)
+
+	return r.Data[0].ID
+}
+
+func getSongIdApple(devToken string, userToken string, song Song) string {
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", "https://api.music.apple.com/v1/catalog/lu/search", nil)
+
+	// Setting headers for user and developer authentication
+	req.Header.Set("Authorization", "Bearer "+devToken)
+	req.Header.Set("Music-User-Token", userToken)
+	r := SearchResponse{}
+	q := req.URL.Query()
+	q.Add("types", "songs")
+	q.Add("term", song.name + " " + song.artists[0])
+	req.URL.RawQuery = q.Encode()
+
+	res, _ := client.Do(req)
+	body, _ := ioutil.ReadAll(res.Body)
+	json.Unmarshal(body, &r)
+
+	return r.Results.Songs.Data[0].ID
 }
