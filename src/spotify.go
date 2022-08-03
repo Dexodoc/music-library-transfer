@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -116,7 +117,7 @@ func simpleArtistToString(artists []spotify.SimpleArtist) []string {
 func addAllSongsSpotify(spotifyClient spotify.Client, songs SongList) {
 	ids := make([]spotify.ID, len(songs.Songs))
 
-	for i, v := range songs.Songs{
+	for i, v := range songs.Songs {
 		ids[i] = getSongIdSpotify(spotifyClient, v)
 	}
 
@@ -124,34 +125,64 @@ func addAllSongsSpotify(spotifyClient spotify.Client, songs SongList) {
 }
 
 func getSongIdSpotify(spotifyClient spotify.Client, song Song) spotify.ID {
-	res, err := spotifyClient.Search(song.name + " " +song.artists[0], spotify.SearchTypeTrack)
+	res, err := spotifyClient.Search(song.name+" "+song.artists[0], spotify.SearchTypeTrack)
 	if err != nil {
-		fmt.Println("ERRR")
-		log.Fatal(err)
+		fmt.Println(err)
+		fmt.Println("Skipping ")
+		return spotify.ID("")
 	}
 	fmt.Println(song.name)
-
+	if len(res.Tracks.Tracks) == 0 {
+		return spotify.ID("")
+	}
 	return res.Tracks.Tracks[0].ID
 }
 
 func addSongIdSpotify(spotifyClient spotify.Client, ids []spotify.ID) {
-	if len(ids) > 50 {
-		i := 0
-		for i = 0; i < len(ids); i+=50 {
-			if i+49 > len(ids) {
-				break
-			}
-			err := spotifyClient.AddTracksToLibrary(ids[i:i+49]...)
-			if err != nil {
-				log.Fatal(err)
-			}
+	err := errors.New("Placeholder")
+	for i := 0; i < len(ids); i += 50 {
+		if i+49 < len(ids) {
+			err = spotifyClient.AddTracksToLibrary(ids[i : i+49]...)
+
+		} else {
+			err = spotifyClient.AddTracksToLibrary(ids[i:]...)
 		}
-		spotifyClient.AddTracksToLibrary(ids[i:]...)
-	}else{
-		err := spotifyClient.AddTracksToLibrary(ids...)
+
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
-	
+}
+
+// Functions to help debug by deleting entire Spotify Library
+func getAllSongIDsSpotify(spotifyClient spotify.Client) []spotify.ID {
+	songsRet := make([]spotify.ID, 0)
+
+	songCount := getSongCountSpotify(spotifyClient)
+	limit := 50
+	for offset := 0; offset < songCount; offset += 50 {
+		options := spotify.Options{Limit: &limit, Offset: &offset}
+		songs, err := spotifyClient.CurrentUsersTracksOpt(&options)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, val := range songs.Tracks {
+			songsRet = append(songsRet, val.FullTrack.ID)
+		}
+	}
+
+	return songsRet
+}
+
+func deleteAllSongsSpotify(spotifyClient spotify.Client) {
+	idList := getAllSongIDsSpotify(spotifyClient)
+	for i := 0; i < len(idList); i += 50 {
+		if i+49 < len(idList) {
+			spotifyClient.RemoveTracksFromLibrary(idList[i : i+49]...)
+		} else {
+			spotifyClient.RemoveTracksFromLibrary(idList[i:]...)
+		}
+	}
+
 }

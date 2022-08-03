@@ -24,11 +24,12 @@ func main() {
 	os.Setenv("SPOTIFY_SECRET", "afc789be90034389b8a0ab2d0a845aa2")
 	os.Setenv("APPLE_DEV_TOKEN", "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IlRSVUM3NzdEWkwifQ.eyJpYXQiOjE2NTkzOTYxMDMsImV4cCI6MTY3NDk0ODEwMywiaXNzIjoiM1M1OVVGV1A4WSJ9.Z5UJwcOyil_2DUjqmCP1ztCYCNnfa3RpwkYrf5rmbJEcgf0iNuzYOgltHUZdtASsxBlYVoI5be3ZW2OchAEEBg")
 
-	pain := getMusicUserToken()
-	fmt.Println(pain)
-	fmt.Println(getStorefrontApple(os.Getenv("APPLE_DEV_TOKEN"), pain))
+	
+	client, _ := NewSpotifyClientBuilder().GetClient()
+	songs := getAllSongsSpotify(*client)
 
-	// client, _ := NewSpotifyClientBuilder().GetClient()
+	pain := getMusicUserToken()
+	addAllSongsApple(os.Getenv("APPLE_DEV_TOKEN"), pain, songs)
 	// song := Song{name: "Luck Be a Lady", artists: []string{"Frank Sinatra"}}
 	// song2 := Song{name: "We Don't Know", artists: []string{"The Strumbellas"}}
 	// song3 := Song{name: "Spirits", artists: []string{"The Strumbellas"}}
@@ -37,5 +38,5 @@ func main() {
 	// songs := SongList{Songs: []Song{song, song2, song3, song4, song5}}
 	// addAllSongsSpotify(*client, songs)
 	// // addSongIdSpotify(*client, id)
-	// fmt.Println("ADAW")
+	fmt.Println("ADAW")
 }
