@@ -1,4 +1,1 @@
-/src/jwt/node_modules
-/src/jwt/package-lock.json
-/src/jwt/AuthKey.p8
-/src/jwt/package.json
+/jwt
