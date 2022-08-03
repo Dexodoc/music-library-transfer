@@ -15,21 +15,15 @@ import (
 
 type LibraryResponse struct {
 	Next string
-	Data []AppleSong
-	Meta AppleMeta
-}
-
-type AppleMeta struct {
-	Total int
-}
-
-type AppleSong struct {
-	Attributes AppleAttributes
-}
-
-type AppleAttributes struct {
-	ArtistName string
-	Name       string
+	Data []struct {
+		Attributes struct {
+			ArtistName string
+			Name       string
+		}
+	}
+	Meta struct {
+		Total int
+	}
 }
 
 type StorefrontResponse struct {
@@ -42,15 +36,15 @@ type SearchResponse struct {
 	Results struct {
 		Songs struct {
 			Data []struct {
-				ID         string `json:"id"`
+				ID         string 
 				Attributes struct {
-					AlbumName        string   `json:"albumName"`
-					Name                 string `json:"name"`
-					ArtistName string `json:"artistName"`
-				} `json:"attributes"`
-			} `json:"data"`
-		} `json:"songs"`
-	} `json:"results"`
+					AlbumName     string
+					Name          string 
+					ArtistName    string 
+				} 
+			} 
+		} 
+	} 
 }
 
 func getMusicUserToken() string {
@@ -63,7 +57,7 @@ func getMusicUserToken() string {
 func musicToken(res chan string) {
 	m := http.NewServeMux()
 	s := http.Server{Addr: ":8000", Handler: m}
-	fmt.Println("Please log in to Spotify by visiting the following page in your browser: http://localhost:8000")
+	fmt.Println("Please log in to Apple Music by visiting the following page in your browser: http://localhost:8000")
 	m.HandleFunc("/return", func(w http.ResponseWriter, r *http.Request) {
 		token := r.URL.Query().Get("token")
 		token = strings.ReplaceAll(token, " ", "+")
@@ -107,9 +101,12 @@ func getAllSongsApple(devToken string, userToken string) SongList {
 
 	songCount := getSongCountApple(devToken, userToken)
 
+	// FOR TESTING ONLYU
+	songCount = 400
+
 	for offset := 0; offset < songCount; offset += 100 {
 		resData := getSongsApple(devToken, userToken, 100, offset)
-
+		fmt.Println(offset)
 		for _, v := range resData.Data {
 			newSong := Song{name: v.Attributes.Name, artists: []string{v.Attributes.ArtistName}}
 			songList.AddItem(newSong)
@@ -118,7 +115,7 @@ func getAllSongsApple(devToken string, userToken string) SongList {
 	return songList
 }
 
-func getStorefrontApple(devToken string, userToken string) string{
+func getStorefrontApple(devToken string, userToken string) string {
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", "https://api.music.apple.com/v1/me/storefront", nil)
 
@@ -134,7 +131,7 @@ func getStorefrontApple(devToken string, userToken string) string{
 
 func getSongIdApple(devToken string, userToken string, song Song) string {
 	client := &http.Client{}
-	req, _ := http.NewRequest("GET", "https://api.music.apple.com/v1/catalog/lu/search", nil)
+	req, _ := http.NewRequest("GET", "https://api.music.apple.com/v1/catalog/" + getStorefrontApple(devToken, userToken) + "/search", nil)
 
 	// Setting headers for user and developer authentication
 	req.Header.Set("Authorization", "Bearer "+devToken)
@@ -150,4 +147,37 @@ func getSongIdApple(devToken string, userToken string, song Song) string {
 	json.Unmarshal(body, &r)
 
 	return r.Results.Songs.Data[0].ID
+}
+
+func addAllSongsApple(devToken string, userToken string, songs SongList) {
+	ids := make([]string, len(songs.Songs))
+
+	for i, v := range songs.Songs{
+		ids[i] = getSongIdApple(devToken, userToken, v)
+	}
+	i:=0
+	
+	for i = 0; i < len(songs.Songs); i+=10 {
+		if i + 10 < len(songs.Songs){
+			addSongIdApple(devToken, userToken, ids[i:i+10])
+		} else{
+			addSongIdApple(devToken, userToken, ids[i:])
+		}
+	}
+}
+
+func addSongIdApple(devToken string, userToken string, ids []string) {
+	client := &http.Client{}
+	req, _ := http.NewRequest("POST", "https://api.music.apple.com/v1/me/library", nil)
+
+	// Setting headers for user and developer authentication
+	req.Header.Set("Authorization", "Bearer "+devToken)
+	req.Header.Set("Music-User-Token", userToken)
+
+	q := req.URL.Query()
+	q.Add("ids[songs]", strings.Join(ids, ","))
+	req.URL.RawQuery = q.Encode()
+
+	client.Do(req)
+	
 }
