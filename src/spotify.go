@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -73,10 +72,13 @@ func randStringBytes(n int) string {
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789_"
 
 func getAllSongsSpotify(spotifyClient spotify.Client) SongList {
+	fmt.Println("Getting all songs from Spotify")
+
 	songs := []Song{}
 	songList := SongList{Songs: songs}
 
 	songCount := getSongCountSpotify(spotifyClient)
+	fmt.Printf("Getting a total of %d songs \n", songCount)
 
 	for offset := 0; offset < songCount; offset += 50 {
 		limit := 50
@@ -90,6 +92,11 @@ func getAllSongsSpotify(spotifyClient spotify.Client) SongList {
 			newSong := Song{name: val.FullTrack.Name, artists: simpleArtistToString(val.Artists)}
 			songList.AddItem(newSong)
 		}
+		upper := offset+50
+		if upper >= songCount {
+			upper = songCount
+		}
+		fmt.Printf("Got songs %d - %d \n", offset, upper)
 	}
 
 	return songList
@@ -115,8 +122,9 @@ func simpleArtistToString(artists []spotify.SimpleArtist) []string {
 }
 
 func addAllSongsSpotify(spotifyClient spotify.Client, songs SongList) {
+	fmt.Printf("Attempting to add %d songs to Spotify Library \n", len(songs.Songs))
 	ids := make([]spotify.ID, len(songs.Songs))
-
+	fmt.Println("Searching for songs in Spotify library")
 	for i, v := range songs.Songs {
 		ids[i] = getSongIdSpotify(spotifyClient, v)
 	}
@@ -128,10 +136,9 @@ func getSongIdSpotify(spotifyClient spotify.Client, song Song) spotify.ID {
 	res, err := spotifyClient.Search(song.name+" "+song.artists[0], spotify.SearchTypeTrack)
 	if err != nil {
 		fmt.Println(err)
-		fmt.Println("Skipping ")
 		return spotify.ID("")
 	}
-	fmt.Println(song.name)
+	fmt.Println("Searching for " + song.name)
 	if len(res.Tracks.Tracks) == 0 {
 		return spotify.ID("")
 	}
@@ -139,18 +146,17 @@ func getSongIdSpotify(spotifyClient spotify.Client, song Song) spotify.ID {
 }
 
 func addSongIdSpotify(spotifyClient spotify.Client, ids []spotify.ID) {
-	err := errors.New("Placeholder")
+	fmt.Println("Adding songs to Spotify Library")
 	for i := 0; i < len(ids); i += 50 {
-		if i+49 < len(ids) {
-			err = spotifyClient.AddTracksToLibrary(ids[i : i+49]...)
-
-		} else {
-			err = spotifyClient.AddTracksToLibrary(ids[i:]...)
+		upper := i + 49
+		if upper >= len(ids) {
+			upper = len(ids)
 		}
-
+		err := spotifyClient.AddTracksToLibrary(ids[i:upper]...)
 		if err != nil {
 			log.Fatal(err)
 		}
+		fmt.Printf("Added song %d - %d to library \n", i, upper)
 	}
 }
 
