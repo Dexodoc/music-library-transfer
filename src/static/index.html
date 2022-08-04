@@ -5,33 +5,32 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
-    <title>Document</title>
+    <title>MLT Apple Music Login</title>
 </head>
 <body>
-    
+    <script>
+    document.addEventListener('musickitloaded', function() {
+        // MusicKit global is now defined
+        MusicKit.configure({
+        developerToken: '',
+        app: {
+            name: 'Music Library Transfer',
+            build: '1.0.0'
+        }
+        });
+
+        let music = MusicKit.getInstance();
+
+        music.authorize().then(musicUserToken => {
+            const Http = new XMLHttpRequest();
+            const url='http://localhost:8000/return?token='.concat(musicUserToken);
+            Http.open("GET", url);
+            Http.send();
+            music.unauthorize();
+            window.close();
+            // console.log(musicUserToken);
+        });
+    });
+    </script>
 </body>
-
-<script>
-document.addEventListener('musickitloaded', function() {
-    // MusicKit global is now defined
-    MusicKit.configure({
-    developerToken: 'eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IlRSVUM3NzdEWkwifQ.eyJpYXQiOjE2NTkzOTY1MjgsImV4cCI6MTY3NDk0ODUyOCwiaXNzIjoiM1M1OVVGV1A4WSJ9.vCLTWQUXz8u3r_W_az3arAwD9eswRzIslJrTpAYi4CAJeWoJJGRsXfKBI06KYgN-b2ozjHr3eKmhPqGZMbn4Ww',
-    app: {
-        name: 'Music Library Transfer',
-        build: '1.0.0'
-    }
-    });
-
-    let music = MusicKit.getInstance();
-
-    music.authorize().then(musicUserToken => {
-        const Http = new XMLHttpRequest();
-        const url='http://localhost:8000/return?token='.concat(musicUserToken);
-        Http.open("GET", url);
-        Http.send();
-
-        console.log(musicUserToken);
-    });
-});
-</script>
 </html>
