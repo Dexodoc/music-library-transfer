@@ -12,7 +12,6 @@ import (
 )
 
 // Structs for destructuring response data
-
 type LibraryResponse struct {
 	Next string
 	Data []struct {
@@ -103,16 +102,6 @@ func getAllSongsApple(devToken string, userToken string) SongList {
 
 	songCount := getSongCountApple(devToken, userToken)
 	fmt.Printf("Getting a total of %d songs \n", songCount)
-
-	// TESTING PURPOSES ONLY
-	//
-	//
-	//
-	songCount = 400
-	//
-	//
-	//
-	//
 
 	for offset := 0; offset < songCount; offset += 100 {
 		resData := getSongsApple(devToken, userToken, 100, offset)
