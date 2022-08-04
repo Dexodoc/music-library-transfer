@@ -2,7 +2,7 @@
 
 A basic CLI tool to be able to transfer entire libraries of songs from Apple Music to Spotify and vice versa. Makes use of API's that both services offer to set all song data for a user and to transfer it to the other library. 
 
-Authorisation happens in a browser window to generate user tokens for both services.
+Authorisation happens in a local web session to generate user tokens for both services.
 
 # Usage
 
